@@ -1,6 +1,7 @@
+import type { Page } from '@playwright/test';
 import { test, expect } from '@playwright/test';
 test('demo, fret filter, stop and responsive layout', async ({ page }) => {
-  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('/#/practice/notes');
   await page.getByRole('button', {name:'Demo',exact:true}).click();
   await expect(page.locator('#note')).toHaveText('A2');
@@ -40,8 +41,8 @@ test('simulated capture: pitch scoring, silence, disconnect and cleanup', async 
   await page.goto('/#/practice/notes'); await page.locator('#start').click();
   await expect(page.locator('#note')).toHaveText('A2');
   await page.locator('#practice').click();
-  const target = (await page.locator('#target').textContent()).replace('Find ', '');
-  const frequencies = { E2:82.406889, A2:110, D3:146.832384, G3:195.997718, B3:246.941651, E4:329.627557 };
+  const target = (await page.locator('#target').textContent())!.replace('Find ', '');
+  const frequencies: Record<string, number> = { E2:82.406889, A2:110, D3:146.832384, G3:195.997718, B3:246.941651, E4:329.627557 };
   await page.evaluate(f => window.fixture.oscillator.frequency.value = f, frequencies[target]);
   await expect(page.locator('#hits')).toHaveText('1');
   await expect(page.locator('#best')).toHaveText('1');

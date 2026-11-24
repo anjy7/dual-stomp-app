@@ -1,31 +1,32 @@
+import type { Page } from '@playwright/test';
 import { test, expect } from '@playwright/test';
-async function fixture(page, mode = 'ok') {
+async function fixture(page: Page, mode = 'ok') {
   await page.addInitScript(mode => {
-    const port = {name:'JME STOMPBOX',state:'connected',onmidimessage:null,closed:0,open:async()=>{},close:async()=>{port.closed++;}};
+    const port: import("./fixtures.js").MockPort = {name:'JME STOMPBOX',state:'connected',onmidimessage:null,closed:0,open:async()=>{},close:async()=>{port.closed = (port.closed ?? 0) + 1;}};
     const snapshot = [240,0,33,122,112,111,2,0,1,10,1,0,0,0,0,247];
-    const sent=[];
-    const output = {name:'JME STOMPBOX',state:'connected',open:async()=>{},close:async()=>{},send:packet=>{
+    const sent: number[][]=[];
+    const output = {name:'JME STOMPBOX',state:'connected',open:async()=>{},close:async()=>{},send:(packet: number[])=>{
       sent.push([...packet]);
       if(packet[5]!==111) throw new Error('Unexpected command');
       if(packet[6]===1) snapshot[7]=packet[7];
       const response=packet[6]===0 ? [...snapshot] : [240,0,33,122,112,111,3,1,0,0,0,0,0,0,0,247];
       if (!window.midiFixture.silent) queueMicrotask(()=>port.onmidimessage?.({data:response}));
     }};
-    const access = {inputs:new Map(mode === 'missing' ? [] : [['jme',port]]), outputs:new Map([['jme-out',output]])};
+    const access = {onstatechange:null as (() => void) | null,inputs:new Map(mode === 'missing' ? [] : [['jme',port]]), outputs:new Map([['jme-out',output]])};
     window.midiFixture = {port,access,output,snapshot,sent,options:null};
     navigator.requestMIDIAccess = async options => {
       window.midiFixture.options = options;
       if (mode === 'denied') throw new DOMException('Denied','NotAllowedError');
-      return access;
+      return access as unknown as MIDIAccess;
     };
   }, mode);
 }
 test('pedal readings, stale clearing, audio independence and unplug/retry', async ({page}) => {
-  const errors = []; page.on('pageerror',e => errors.push(e.message));
+  const errors: string[] = []; page.on('pageerror',e => errors.push(e.message));
   await fixture(page); await page.goto('/#/pedal/tuner'); await page.locator('#pedal-connect').click();
   await expect(page.locator('#pedal-status')).toContainText('Connected to JME');
   expect(await page.evaluate(() => window.midiFixture.options)).toEqual({sysex:true});
-  async function send(messages) { await page.evaluate(messages => messages.forEach(data => window.midiFixture.port.onmidimessage({data:new Uint8Array(data)})),messages); }
+  async function send(messages: number[][]) { await page.evaluate(messages => messages.forEach(data => window.midiFixture.port.onmidimessage!({data:new Uint8Array(data)})),messages); }
   await send([[176,69,1],[176,70,7],[176,72,30]]);
   await expect(page.locator('#pedal-note')).toHaveText('E');
   await expect(page.locator('#pedal-reading')).toContainText('Flat');
@@ -36,7 +37,7 @@ test('pedal readings, stale clearing, audio independence and unplug/retry', asyn
   await expect(page.locator('#pedal-note')).toHaveText('—',{timeout:4000});
   await send([[176,72,50]]); await expect(page.locator('#pedal-note')).toHaveText('E');
   await send([[176,69,0]]); await expect(page.locator('#pedal-note')).toHaveText('—');
-  await page.evaluate(() => { window.midiFixture.port.state='disconnected'; window.midiFixture.access.onstatechange(); });
+  await page.evaluate(() => { window.midiFixture.port.state='disconnected'; window.midiFixture.access.onstatechange?.(); });
   await expect(page.locator('#pedal-status')).toContainText('unplugged');
   await expect(page.locator('#pedal-connect')).toBeEnabled();
   expect(await page.evaluate(() => window.midiFixture.port.closed)).toBe(1);

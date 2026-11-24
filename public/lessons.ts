@@ -13,13 +13,14 @@ export const PHRASES = [
  ['Solo 2 · middle', '3:7 3:8 3:7 3:10 3:8~ 3:10 2:8 2:9 2:8'],
  ['Solo 2 · slides and final bend', '1:10/15 1:14 1:15 1:17 1:17b18 2:13 2:13/15\\11 2:13 2:13/15\\11']
 ].map(([name,tab],id)=>({id,name,tab,notes:parseTab(tab)}));
-export function parseTab(tab) {
+export interface LessonNote { string: number; fret: number | null; midi: number | null; label: string; token: string }
+export function parseTab(tab: string): LessonNote[] {
  return tab.split(/\s+/).flatMap(token=>{
   const [s,notation]=token.split(':'),string=Number(s);
   if(!(string>=1&&string<=6)) throw new Error('Invalid string');
   if(notation==='x')return [{string,fret:null,midi:null,label:'Muted rake · manually advance',token}];
   const nums=[...notation.matchAll(/\d+/g)]; if(!nums.length)throw new Error('Missing fret');
-  const result=[]; let base=Number(nums[0][0]);
+  const result: LessonNote[]=[]; let base=Number(nums[0][0]);
   if(notation.startsWith('pbr')) result.push({string,fret:base,midi:TUNING[string-1]+base+2,label:'Pick pre-bent +2 semitones, then release',token});
   if(notation.startsWith('pb')&&!notation.startsWith('pbr')) base-=2;
   nums.forEach((m,i)=>{
@@ -31,12 +32,13 @@ export function parseTab(tab) {
  });
 }
 export class PhraseTracker {
- constructor(notes){this.notes=notes;this.index=0;this.since=null;this.last=null;this.release=false;this.previous=null;}
- update(frequency,now,onset=false){
+ notes: LessonNote[]; index: number; since: number | null; last: number | null; release: boolean; previous: number | null;
+ constructor(notes: LessonNote[]){this.notes=notes;this.index=0;this.since=null;this.last=null;this.release=false;this.previous=null;}
+ update(frequency: number | null | undefined,now: number,onset=false){
   const note=this.notes[this.index];if(!note||note.midi===null)return false;
   if(!frequency){this.release=false;this.since=null;this.last=now;return false;}
   const exact=69+12*Math.log2(frequency/440);
-  if(this.release && !onset && Math.abs(exact-this.previous)<.5)return false;
+  if(this.release && !onset && Math.abs(exact-this.previous!)<.5)return false;
   this.release=false;
   if(Math.abs(exact-note.midi)>.35||this.last!==null&&now-this.last>250)this.since=null;
   this.last=now;
@@ -48,7 +50,8 @@ export class PhraseTracker {
  skip(){this.index++;this.since=null;this.release=false;}
 }
 export class OnsetDetector {
+ previous: number; last: number;
  constructor(){this.previous=-90;this.last=-Infinity;}
- update(level,now){const hit=level>-48&&level-this.previous>7&&now-this.last>150;this.previous=level;if(hit)this.last=now;return hit;}
+ update(level: number,now: number){const hit=level>-48&&level-this.previous>7&&now-this.last>150;this.previous=level;if(hit)this.last=now;return hit;}
 }
-export function beatError(now,start,bpm,latency=0){const beat=60000/bpm;return ((now-start-latency+beat/2)%beat+beat)%beat-beat/2;}
+export function beatError(now: number,start: number,bpm: number,latency=0){const beat=60000/bpm;return ((now-start-latency+beat/2)%beat+beat)%beat-beat/2;}

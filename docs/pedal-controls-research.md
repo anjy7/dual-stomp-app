@@ -45,6 +45,6 @@ No full-buffer SET, firmware, preset-save, IR-write or system-setting command is
 - `.scratch/pedal-controls-verification.json`: real-device read/write/readback sequence, all eight bypass toggles/restores, gain change/restore, P05/P06 switch, snapshot recall, exact final current-buffer equality with starting P06/gain 50.
 - `.scratch/pedal-controls-ui-verification.json` and `.scratch/pedal-controls-live.png`: real Edge UI read, browser-local snapshot save, gain 50→51, snapshot recall→50, disconnect, no page errors.
 - `test/fixtures/jme-p06.json`: real readback fixture; unit tests cover offset decoding, preserved bytes, validated ranges, unsupported model refusal, recall preflight, timeout/disconnect/serialization and readback mismatch.
-- `test/browser/pedal-controls.spec.js`: simulated end-to-end controls, snapshot persistence/download/delete, disconnect and mobile layout. Existing tuner and studio tests remain applicable.
+- `test/browser/pedal-controls.spec.ts`: simulated end-to-end controls, snapshot persistence/download/delete, disconnect and mobile layout. Existing tuner and studio tests remain applicable.
 
-Implementation owners: `public/pedal-control.js` (protocol and verification), `public/pedal-controls-ui.js` (controls/storage), `public/pedal-tuner.js` (shared connection and serialization). The app never opens MIDI output for arbitrary devices; it requires exactly one JME STOMPBOX input and matching output.
+Implementation owners: `public/pedal-control.ts` (protocol and verification), `public/pedal-controls-ui.ts` (controls/storage), `public/pedal-tuner.ts` (shared connection and serialization). The app never opens MIDI output for arbitrary devices; it requires exactly one JME STOMPBOX input and matching output.

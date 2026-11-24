@@ -6,7 +6,7 @@ test('pedal CC decoding: observed capture prefix, table and display boundaries',
   // First observed CC triplet from the receive-only JME STOMPBOX capture.
   for (const data of [[0xb0,69,1],[0xb0,70,6],[0xb0,72,27]]) assert.equal(s.receive(data, 100), true);
   assert.equal(s.view(100).note, 'E♭'); assert.equal(s.view(100).direction, 'flat');
-  for (const [position, direction] of [[47,'flat'],[48,'centered'],[50,'centered'],[52,'centered'],[53,'sharp']]) {
+  for (const [position, direction] of [[47,'flat'],[48,'centered'],[50,'centered'],[52,'centered'],[53,'sharp']] as const) {
     s.receive([0xb0,72,position], 101); assert.equal(s.view(101).direction,direction);
   }
   PEDAL_NOTES.forEach((note,i) => { s.receive([0xb0,70,i],102); assert.equal(s.view(102).note,note); });

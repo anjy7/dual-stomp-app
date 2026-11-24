@@ -1,17 +1,17 @@
 export const TUNING = [64, 59, 55, 50, 45, 40]; // string 1 (thin) to 6 (thick)
 const NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
-export const frequencyFor = midi => 440 * 2 ** ((midi - 69) / 12);
-export const noteName = midi => NAMES[((midi % 12) + 12) % 12] + (Math.floor(midi / 12) - 1);
-export function noteFor(frequency) {
+export const frequencyFor = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
+export const noteName = (midi: number) => NAMES[((midi % 12) + 12) % 12] + (Math.floor(midi / 12) - 1);
+export function noteFor(frequency: number) {
   const exact = 69 + 12 * Math.log2(frequency / 440);
   const midi = Math.round(exact);
   return { midi, name: noteName(midi), cents: (exact - midi) * 100 };
 }
-export function positions(midi) {
+export function positions(midi: number) {
   return TUNING.flatMap((open, i) => midi >= open && midi <= open + 21 ? [{ string: i + 1, fret: midi - open }] : []);
 }
 // YIN cumulative mean normalized difference. Range covers standard guitar, 21 frets.
-export function detectPitch(samples, rate, gateDb = -50) {
+export function detectPitch(samples: Float32Array, rate: number, gateDb = -50) {
   let mean = 0;
   for (const x of samples) mean += x;
   mean /= samples.length;
@@ -44,10 +44,13 @@ export function detectPitch(samples, rate, gateDb = -50) {
   return base;
 }
 // A hit requires consecutive matching samples spanning 450ms, not one noisy frame.
+export type PitchResult = ReturnType<typeof detectPitch>;
 export class HoldTracker {
+ since: number | null = null;
+ last: number | null = null;
   constructor() { this.reset(); }
   reset() { this.since = null; this.last = null; }
-  update(matches, now) {
+  update(matches: boolean, now: number) {
     if (!matches || (this.last !== null && now - this.last > 250)) this.reset();
     if (!matches) return false;
     this.last = now;

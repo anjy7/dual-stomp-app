@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { detectPitch, frequencyFor, noteFor, positions, HoldTracker } from '../public/dsp.js';
-function signal(f, rate, harmonics = false) {
+function signal(f: number, rate: number, harmonics = false) {
   return Float32Array.from({length: 4096}, (_, i) => {
     const phase = 2 * Math.PI * f * i / rate;
     return harmonics ? .16 * Math.sin(phase) + .3 * Math.sin(2 * phase) + .1 * Math.sin(3 * phase) : .4 * Math.sin(phase);

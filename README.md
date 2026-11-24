@@ -9,12 +9,13 @@ Clone the repository, then start the app:
 ```powershell
 git clone https://github.com/anjy7/dual-stomp-app.git
 cd dual-stomp-app
+npm ci
 npm start
 ```
 
 On Windows, you can also double-click `Start-Guitar-Lab.cmd` inside the project folder.
 
-Open http://127.0.0.1:4317 in Chrome or Edge. Node.js 22+ is required. The app has no runtime dependencies. Close the server terminal to stop hosting. Click **Stop** to release the audio input.
+Open http://127.0.0.1:4317 in Chrome or Edge. Node.js 22+ is required. The app has no runtime dependencies. Run `npm ci` once to install the TypeScript compiler and development tools; `npm start` builds the app into ignored `dist/` before serving it. Close the server terminal to stop hosting. Click **Stop** to release the audio input.
 
 1. Connect the powered Soran over USB.
 2. Open **Settings → Audio input**, click **Find inputs**, allow microphone permission, then select **Microphone (2- JME STOMPBOX)** (the number may differ).
@@ -78,9 +79,11 @@ Windows enumerated the pedal's recording endpoint during setup. Synthetic tests 
 ```powershell
 npm ci
 npm test
-npx playwright test
+npm run test:browser
 ```
 
-Browser tests use installed Microsoft Edge and simulated audio capture; test outputs and screenshots go in `.scratch/`. Unit tests cover the standard 21-fret pitch range at 44.1, 48 and 96 kHz with pure/harmonic signals, silence/noise, position mapping and hold timing. Browser tests cover demo detection, filtering, mobile overflow, denied permissions, practice scoring, silence, disconnect and track cleanup.
+`npm run typecheck` checks app, server, build script, and tests with strict TypeScript (without emitting files). `npm run build` cleans and compiles `dist/`, then copies HTML/CSS and test fixtures. Source imports deliberately use `.js` extensions for NodeNext/browser ESM compatibility; TypeScript resolves these to the corresponding `.ts` source files. Do not edit generated files in `dist/`.
 
-Implementation: `public/navigation.js` owns hash navigation, view visibility, focus and activity links, preserving original feature DOM nodes and media lifecycles; `public/lessons.js` owns supplied-tab pitch targets, phrase holds and timing helpers; `public/studio.js` owns studio UI, metronome, local takes, progress and incoming footswitch learning; `public/pedal-tuner.js` owns the MIDI connection and display; `public/tuner-control.js` owns tuner GET/SET; `public/pedal-control.js` owns preset readback and restricted temporary edits; `public/pedal-controls-ui.js` owns pedal controls and browser-local snapshots; `public/dsp.js` owns pitch/music logic; `public/app.js` owns audio lifecycle and UI; `server.mjs` serves only allowlisted assets on 127.0.0.1:4317. The only dependency is a browser-test development dependency.
+Browser tests launch a fresh compiled server on port 4318, separate from the normal app on 4317, and use installed Microsoft Edge and simulated audio capture; test outputs and screenshots go in `.scratch/`. Unit tests cover the standard 21-fret pitch range at 44.1, 48 and 96 kHz with pure/harmonic signals, silence/noise, position mapping and hold timing. Browser tests cover demo detection, filtering, mobile overflow, denied permissions, practice scoring, silence, disconnect and track cleanup.
+
+Implementation: `public/navigation.ts` owns hash navigation, view visibility, focus and activity links, preserving original feature DOM nodes and media lifecycles; `public/lessons.ts` owns supplied-tab pitch targets, phrase holds and timing helpers; `public/studio.ts` owns studio UI, metronome, local takes, progress and incoming footswitch learning; `public/pedal-tuner.ts` owns the MIDI connection and display; `public/tuner-control.ts` owns tuner GET/SET; `public/pedal-control.ts` owns preset readback and restricted temporary edits; `public/pedal-controls-ui.ts` owns pedal controls and browser-local snapshots; `public/dsp.ts` owns pitch/music logic; `public/app.ts` owns audio lifecycle and UI; `server.ts` serves only allowlisted assets on 127.0.0.1:4317. All dependencies are development-only: TypeScript, Node.js type definitions, and Playwright. Source files remain TypeScript; browsers receive compiled JavaScript.
