@@ -1,0 +1,1 @@
+export async function navigate(page,path){const [view,tool]=path.split('/');await page.locator(`.main-nav [data-page="${view}"]`).click();if(tool)await page.locator(`[data-view="${view}"] .tool-nav a[href="#/${path}"]`).click();}
